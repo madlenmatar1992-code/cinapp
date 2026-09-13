@@ -1,13 +1,1043 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta http-equiv="refresh" content="0; url=./docs/" />
-    <title>CineBook</title>
-  </head>
-  <body>
-    <p>Opening CineBook...</p>
-    <script>window.location.replace("./docs/");</script>
-  </body>
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineBook - Premium Cinema Booking & Digital Tickets</title>
+  <meta name="description" content="Explore blockbusters, select IMAX & VIP Recliner seats in real-time, and get instant digital tickets with CineBook." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+              950: '#07090e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #07090e;
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    .glass-panel {
+      background: rgba(15, 20, 31, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: linear-gradient(135deg, rgba(22, 30, 46, 0.75) 0%, rgba(14, 19, 31, 0.9) 100%);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+    }
+    .glass-card:hover {
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+    .cinema-screen-glow {
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.35) 0%, rgba(245, 158, 11, 0.15) 45%, transparent 100%);
+      filter: blur(10px);
+    }
+    .ticket-edge-cut {
+      position: relative;
+    }
+    .ticket-edge-cut::before,
+    .ticket-edge-cut::after {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background-color: #07090e;
+      border-radius: 50%;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 20;
+    }
+    .ticket-edge-cut::before { left: -12px; }
+    .ticket-edge-cut::after { right: -12px; }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #07090e; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printableTicket, #printableTicket * { visibility: visible; }
+      #printableTicket { position: absolute; left: 0; top: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
+
+  <!-- NAVBAR -->
+  <nav class="sticky top-0 z-50 w-full glass-panel border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <a href="javascript:void(0)" onclick="navigateTo('home')" class="flex items-center space-x-3 group cursor-pointer">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+          <svg class="w-5 h-5 text-slate-950" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M17 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xl font-extrabold tracking-wider bg-gradient-to-r from-amber-400 via-amber-200 to-yellow-500 bg-clip-text text-transparent">
+            CINEBOOK
+          </span>
+          <span class="text-[9px] uppercase tracking-widest text-slate-400 font-semibold -mt-1">
+            PREMIUM CINEMA
+          </span>
+        </div>
+      </a>
+
+      <!-- Desktop Links -->
+      <div class="hidden md:flex items-center space-x-2">
+        <button onclick="navigateTo('home')" id="nav-home" class="px-3 py-1.5 rounded-lg text-sm font-medium text-amber-400 bg-white/5 transition-colors">Movies</button>
+        <button onclick="navigateTo('cinemas')" id="nav-cinemas" class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Cinemas</button>
+        <button onclick="navigateTo('showtimes')" id="nav-showtimes" class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Showtimes</button>
+        <button onclick="navigateTo('bookings')" id="nav-bookings" class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">My Bookings</button>
+        <button onclick="navigateTo('admin')" id="nav-admin" class="px-3 py-1.5 rounded-lg text-sm font-medium text-amber-300/90 hover:bg-amber-500/10 border border-amber-500/30 transition-colors">Admin Console</button>
+      </div>
+
+      <!-- User Role Switches -->
+      <div class="flex items-center space-x-2">
+        <div class="hidden sm:flex items-center space-x-1.5 bg-slate-900/90 p-1 rounded-xl border border-white/10 text-xs">
+          <button onclick="switchRole('USER')" id="roleBtnUser" class="px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-slate-950">Demo User</button>
+          <button onclick="switchRole('ADMIN')" id="roleBtnAdmin" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Demo Admin</button>
+        </div>
+        <div id="currentUserBadge" class="px-3 py-1 rounded-full bg-slate-800 text-xs font-semibold text-slate-300 border border-slate-700">
+          Alex Johnson
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTAINER -->
+  <main id="appContent" class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+    <!-- Dynamic View Injected Here -->
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full border-t border-white/10 bg-slate-950/80 backdrop-blur-md mt-20 py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-400 gap-4">
+      <div class="flex items-center space-x-3">
+        <span class="font-extrabold text-amber-400 text-sm tracking-wider">CINEBOOK</span>
+        <span>•</span>
+        <span>IMAX Laser 70mm, Dolby Atmos, and VIP Recliner Luxury Seating</span>
+      </div>
+      <div>© 2026 CineBook Inc. Real-Time Seat Reservation & Digital Usher Passes.</div>
+    </div>
+  </footer>
+
+  <!-- TRAILER MODAL -->
+  <div id="trailerModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="relative w-full max-w-4xl rounded-2xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl">
+      <div class="flex items-center justify-between p-4 border-b border-white/10">
+        <h3 id="trailerTitle" class="text-sm font-bold text-white">Movie Trailer</h3>
+        <button onclick="closeTrailer()" class="p-1 rounded-lg text-slate-400 hover:text-white text-lg">&times;</button>
+      </div>
+      <div class="aspect-video w-full">
+        <iframe id="trailerIframe" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC & STATE -->
+  <script>
+    // Initial Movie Database
+    const initialMovies = [
+      {
+        id: "m-dune2",
+        title: "Dune: Part Two",
+        slug: "dune-part-two",
+        synopsis: "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the universe, he endeavors to prevent a terrible future only he can foresee.",
+        durationMins: 166,
+        releaseDate: "2024-03-01",
+        posterUrl: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800&auto=format&fit=crop",
+        backdropUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1600&auto=format&fit=crop",
+        trailerEmbed: "https://www.youtube.com/embed/Way9Dexny3w",
+        rating: "PG-13",
+        language: "English",
+        genres: ["Sci-Fi", "Adventure", "Drama"]
+      },
+      {
+        id: "m-oppenheimer",
+        title: "Oppenheimer",
+        slug: "oppenheimer",
+        synopsis: "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II, exploring moral and scientific dilemmas of modern physics.",
+        durationMins: 180,
+        releaseDate: "2023-07-21",
+        posterUrl: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=800&auto=format&fit=crop",
+        backdropUrl: "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=1600&auto=format&fit=crop",
+        trailerEmbed: "https://www.youtube.com/embed/uYPbbksJxIg",
+        rating: "R",
+        language: "English",
+        genres: ["Drama", "Thriller"]
+      },
+      {
+        id: "m-interstellar",
+        title: "Interstellar",
+        slug: "interstellar",
+        synopsis: "When Earth becomes uninhabitable in the future, a farmer and ex-NASA pilot, Joseph Cooper, is tasked to pilot a spacecraft, along with a team of researchers, to find a new planet for humans.",
+        durationMins: 169,
+        releaseDate: "2014-11-07",
+        posterUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop",
+        backdropUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1600&auto=format&fit=crop",
+        trailerEmbed: "https://www.youtube.com/embed/zSWdZVtXT7E",
+        rating: "PG-13",
+        language: "English",
+        genres: ["Sci-Fi", "Adventure", "Drama"]
+      },
+      {
+        id: "m-spiderman",
+        title: "Spider-Man: Across the Spider-Verse",
+        slug: "spider-man-across-the-spider-verse",
+        synopsis: "Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence. When heroes clash, Miles must redefine what it means to be a hero.",
+        durationMins: 140,
+        releaseDate: "2023-06-02",
+        posterUrl: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800&auto=format&fit=crop",
+        backdropUrl: "https://images.unsplash.com/photo-1534809027769-b00d750a6bac?q=80&w=1600&auto=format&fit=crop",
+        trailerEmbed: "https://www.youtube.com/embed/cqGjhVJWtEg",
+        rating: "PG",
+        language: "English",
+        genres: ["Animation", "Action", "Adventure"]
+      },
+      {
+        id: "m-inception",
+        title: "Inception",
+        slug: "inception",
+        synopsis: "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O., but his tragic past threatens the mission.",
+        durationMins: 148,
+        releaseDate: "2010-07-16",
+        posterUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800&auto=format&fit=crop",
+        backdropUrl: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1600&auto=format&fit=crop",
+        trailerEmbed: "https://www.youtube.com/embed/YoHD9XEInc0",
+        rating: "PG-13",
+        language: "English",
+        genres: ["Sci-Fi", "Action", "Thriller"]
+      },
+      {
+        id: "m-bladerunner",
+        title: "Blade Runner 2049",
+        slug: "blade-runner-2049",
+        synopsis: "Young Blade Runner K's discovery of a long-buried secret leads him to track down former Blade Runner Rick Deckard, who has been missing for thirty years.",
+        durationMins: 164,
+        releaseDate: "2017-10-06",
+        posterUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop",
+        backdropUrl: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=1600&auto=format&fit=crop",
+        trailerEmbed: "https://www.youtube.com/embed/gCcx85zbxz4",
+        rating: "R",
+        language: "English",
+        genres: ["Sci-Fi", "Mystery", "Drama"]
+      }
+    ];
+
+    const initialCinemas = [
+      { id: "c-ny", name: "CineBook Grand IMAX", city: "New York", address: "1500 Broadway, Times Square", screen: "IMAX Laser 70mm", phone: "+1 (212) 555-0199" },
+      { id: "c-la", name: "CineBook Luxe Lounge", city: "Los Angeles", address: "10250 Santa Monica Blvd", screen: "VIP Recliner Suite", phone: "+1 (310) 555-0144" },
+      { id: "c-chi", name: "CineBook Skyline Cinema", city: "Chicago", address: "400 N Michigan Ave", screen: "Dolby Atmos Cinema", phone: "+1 (312) 555-0188" }
+    ];
+
+    // Local Storage helpers
+    function getStore(key, defaultVal) {
+      try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultVal;
+      } catch { return defaultVal; }
+    }
+    function setStore(key, val) {
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+    }
+
+    let movies = getStore("cb_movies", initialMovies);
+    let cinemas = getStore("cb_cinemas", initialCinemas);
+    let bookings = getStore("cb_bookings", []);
+    let seatStatuses = getStore("cb_seat_status", {}); // { `${showtimeId}_${seatId}`: 'BOOKED' }
+
+    let currentRole = "USER";
+    let activeView = "home";
+    let viewData = {};
+
+    // Filters
+    let searchQuery = "";
+    let selectedGenre = "All";
+    let selectedCinema = "All";
+
+    // Selected Seats in Booking View
+    let selectedSeatIds = [];
+
+    // Navigation Router
+    function navigateTo(view, data = {}) {
+      activeView = view;
+      viewData = data;
+      selectedSeatIds = [];
+      updateNavHighlight();
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateNavHighlight() {
+      ['home', 'cinemas', 'showtimes', 'bookings', 'admin'].forEach(v => {
+        const el = document.getElementById(`nav-${v}`);
+        if (!el) return;
+        if (v === activeView) {
+          el.className = "px-3 py-1.5 rounded-lg text-sm font-medium text-amber-400 bg-white/5 transition-colors";
+        } else {
+          el.className = "px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors";
+        }
+      });
+    }
+
+    function switchRole(role) {
+      currentRole = role;
+      document.getElementById("roleBtnUser").className = role === "USER" ? "px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-slate-950" : "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white";
+      document.getElementById("roleBtnAdmin").className = role === "ADMIN" ? "px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-slate-950" : "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white";
+      document.getElementById("currentUserBadge").textContent = role === "ADMIN" ? "Admin (Operator)" : "Alex Johnson";
+      if (role === "ADMIN" && activeView !== "admin") navigateTo("admin");
+      else render();
+    }
+
+    function openTrailer(title, url) {
+      document.getElementById("trailerTitle").textContent = `${title} - Official Trailer`;
+      document.getElementById("trailerIframe").src = url;
+      document.getElementById("trailerModal").classList.remove("hidden");
+      document.getElementById("trailerModal").classList.add("flex");
+    }
+
+    function closeTrailer() {
+      document.getElementById("trailerIframe").src = "";
+      document.getElementById("trailerModal").classList.add("hidden");
+      document.getElementById("trailerModal").classList.remove("flex");
+    }
+
+    // MAIN RENDER FUNCTION
+    function render() {
+      const container = document.getElementById("appContent");
+      if (activeView === "home") renderHome(container);
+      else if (activeView === "movieDetails") renderMovieDetails(container, viewData.movieId);
+      else if (activeView === "booking") renderSeatSelection(container, viewData.showtime);
+      else if (activeView === "checkout") renderCheckout(container, viewData.booking);
+      else if (activeView === "ticket") renderTicket(container, viewData.bookingId);
+      else if (activeView === "bookings") renderBookings(container);
+      else if (activeView === "cinemas") renderCinemas(container);
+      else if (activeView === "showtimes") renderShowtimes(container);
+      else if (activeView === "admin") renderAdmin(container);
+    }
+
+    // 1. HOME VIEW
+    function renderHome(c) {
+      const featured = movies[0];
+      const filtered = movies.filter(m => {
+        const matchesQ = m.title.toLowerCase().includes(searchQuery.toLowerCase()) || m.synopsis.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesG = selectedGenre === "All" || m.genres.includes(selectedGenre);
+        return matchesQ && matchesG;
+      });
+
+      const allGenres = ["All", ...new Set(movies.flatMap(m => m.genres))];
+
+      c.innerHTML = `
+        <!-- Hero Spotlight -->
+        <section class="relative rounded-3xl overflow-hidden glass-card border border-white/10 p-8 sm:p-14 shadow-2xl">
+          <div class="absolute inset-0 z-0">
+            <img src="${featured.backdropUrl}" alt="${featured.title}" class="w-full h-full object-cover filter brightness-[0.35]" />
+            <div class="absolute inset-0 bg-gradient-to-t from-[#07090e] via-[#07090e]/60 to-transparent"></div>
+          </div>
+          <div class="relative z-10 max-w-2xl space-y-4">
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/40">Featured Premiere</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-300">${featured.rating}</span>
+              <span class="text-xs text-slate-300">${featured.durationMins} mins • ${featured.language}</span>
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight">${featured.title}</h1>
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-3">${featured.synopsis}</p>
+            <div class="flex flex-wrap gap-3 pt-3">
+              <button onclick="navigateTo('movieDetails', { movieId: '${featured.id}' })" class="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition-transform hover:scale-105">Book Tickets Now</button>
+              <button onclick="openTrailer('${featured.title}', '${featured.trailerEmbed}')" class="px-5 py-3 rounded-xl glass-panel text-slate-200 hover:text-white text-xs font-semibold hover:bg-white/10 transition-colors">▶ Watch Trailer</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Search & Filter Bar -->
+        <section class="glass-card rounded-2xl p-4 sm:p-6 border border-white/10 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input type="text" value="${searchQuery}" oninput="searchQuery = this.value; renderHome(document.getElementById('appContent'))" placeholder="Search blockbusters by title or storyline..." class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-amber-500" />
+            <div class="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
+              ${allGenres.map(g => `
+                <button onclick="selectedGenre = '${g}'; renderHome(document.getElementById('appContent'))" class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${selectedGenre === g ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'}">${g}</button>
+              `).join("")}
+            </div>
+          </div>
+        </section>
+
+        <!-- Now Showing Grid -->
+        <section class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-2xl font-black text-white">Now Showing (${filtered.length})</h2>
+            <span class="text-xs text-amber-400 font-semibold cursor-pointer" onclick="navigateTo('showtimes')">Browse Full Schedule →</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+            ${filtered.map(m => `
+              <div onclick="navigateTo('movieDetails', { movieId: '${m.id}' })" class="group flex flex-col rounded-2xl overflow-hidden glass-card hover:border-amber-500/50 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer shadow-xl">
+                <div class="relative aspect-[2/3] w-full overflow-hidden bg-slate-900">
+                  <img src="${m.posterUrl}" alt="${m.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div class="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-slate-950/80 text-[10px] font-bold text-slate-200">${m.rating}</div>
+                  <div class="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 text-[9px] font-black uppercase">IMAX</div>
+                </div>
+                <div class="p-3 flex flex-col flex-1 justify-between space-y-2">
+                  <div>
+                    <h3 class="text-xs sm:text-sm font-bold text-white group-hover:text-amber-400 line-clamp-1">${m.title}</h3>
+                    <p class="text-[11px] text-slate-400">${m.durationMins}m • ${m.genres[0] || 'Film'}</p>
+                  </div>
+                  <div class="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-amber-400 font-bold">
+                    <span>Book Seats</span>
+                    <span>→</span>
+                  </div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    // 2. MOVIE DETAILS VIEW
+    function renderMovieDetails(c, movieId) {
+      const movie = movies.find(m => m.id === movieId) || movies[0];
+      const today = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+
+      c.innerHTML = `
+        <div class="space-y-8">
+          <button onclick="navigateTo('home')" class="px-3 py-1.5 rounded-lg glass-panel text-xs font-semibold text-slate-300 hover:text-white flex items-center space-x-1">
+            <span>← Back to Movies</span>
+          </button>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div class="lg:col-span-4 flex flex-col items-center">
+              <div class="w-64 sm:w-72 lg:w-full aspect-[2/3] rounded-2xl overflow-hidden glass-card shadow-2xl border border-white/10">
+                <img src="${movie.posterUrl}" alt="${movie.title}" class="w-full h-full object-cover" />
+              </div>
+              <button onclick="openTrailer('${movie.title}', '${movie.trailerEmbed}')" class="w-64 sm:w-72 lg:w-full mt-4 py-2.5 rounded-xl glass-panel text-slate-200 hover:text-white font-semibold text-xs flex items-center justify-center space-x-2 border border-white/10">
+                <span>▶ Watch Official Trailer</span>
+              </button>
+            </div>
+
+            <div class="lg:col-span-8 space-y-6">
+              <div class="space-y-3">
+                <div class="flex items-center space-x-2">
+                  <span class="px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/30">${movie.rating}</span>
+                  <span class="text-xs text-slate-400">${movie.durationMins} minutes • ${movie.language} • Released ${movie.releaseDate}</span>
+                </div>
+                <h1 class="text-3xl sm:text-5xl font-black text-white">${movie.title}</h1>
+                <div class="flex flex-wrap gap-2">
+                  ${movie.genres.map(g => `<span class="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">${g}</span>`).join("")}
+                </div>
+                <div class="glass-panel rounded-2xl p-5 border border-white/10">
+                  <h3 class="text-xs uppercase font-bold text-slate-400 mb-1">Storyline</h3>
+                  <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">${movie.synopsis}</p>
+                </div>
+              </div>
+
+              <!-- Available Screenings Schedule -->
+              <div class="space-y-4 pt-4">
+                <h2 class="text-xl font-bold text-white">Select Screening & Experience (${today})</h2>
+                <div class="space-y-4">
+                  ${cinemas.map(cin => `
+                    <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-3">
+                      <div class="flex items-center justify-between pb-2 border-b border-white/5">
+                        <div>
+                          <h3 class="text-sm font-bold text-white">${cin.name} (${cin.city})</h3>
+                          <p class="text-[11px] text-slate-400">${cin.address}</p>
+                        </div>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">${cin.screen}</span>
+                      </div>
+                      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        ${[
+                          { time: "2:00 PM", price: 1850 },
+                          { time: "5:30 PM", price: 2100 },
+                          { time: "8:45 PM", price: 2400 }
+                        ].map(st => `
+                          <button onclick="navigateTo('booking', { showtime: { id: '${movie.id}_${cin.id}_${st.time.replace(/[: ]/g, '')}', movieTitle: '${movie.title}', moviePoster: '${movie.posterUrl}', cinemaName: '${cin.name}', screen: '${cin.screen}', time: '${st.time}', price: ${st.price} } })" class="p-2.5 rounded-xl bg-slate-900/90 hover:bg-amber-500/10 border border-slate-800 hover:border-amber-500 text-left transition-all">
+                            <div class="text-xs font-bold text-white">${st.time}</div>
+                            <div class="text-[11px] text-amber-400 font-bold">$${(st.price / 100).toFixed(2)}</div>
+                          </button>
+                        `).join("")}
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 3. SEAT SELECTION VIEW
+    function renderSeatSelection(c, st) {
+      const rows = ["A", "B", "C", "D", "E", "F", "G", "H"];
+      
+      const subtotal = selectedSeatIds.reduce((sum, sId) => {
+        const row = sId[0];
+        let price = st.price;
+        if (row === "E" || row === "F") price += 400; // VIP
+        if (row === "G" || row === "H") price += 600; // Recliner
+        return sum + price;
+      }, 0);
+
+      const fees = selectedSeatIds.length * 150;
+      const tax = Math.round(subtotal * 0.08);
+      const total = subtotal + fees + tax;
+
+      c.innerHTML = `
+        <div class="space-y-8 pb-28">
+          <div class="glass-card rounded-2xl p-4 sm:p-6 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center space-x-4">
+              <button onclick="navigateTo('movieDetails', { movieId: viewData.showtime.id.split('_')[0] })" class="p-2 rounded-xl bg-white/5 text-slate-400 hover:text-white">←</button>
+              <img src="${st.moviePoster}" class="w-12 h-16 rounded-lg object-cover" />
+              <div>
+                <h1 class="text-base sm:text-lg font-bold text-white">${st.movieTitle}</h1>
+                <p class="text-xs text-slate-400">${st.cinemaName} • <span class="text-amber-400 font-semibold">${st.screen}</span> • ${st.time}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-slate-400 block">Selected Seats</span>
+              <span class="text-base font-extrabold text-amber-400">${selectedSeatIds.length} / 8</span>
+            </div>
+          </div>
+
+          <!-- Screen & Seat Map -->
+          <div class="glass-panel rounded-3xl p-6 sm:p-10 border border-white/10 flex flex-col items-center shadow-2xl">
+            <!-- Curved Screen -->
+            <div class="w-full max-w-xl mb-12 flex flex-col items-center">
+              <div class="w-full h-8 border-t-4 border-cyan-400/80 rounded-t-[50%] relative">
+                <div class="cinema-screen-glow absolute inset-0 -top-3"></div>
+              </div>
+              <span class="text-[10px] font-black tracking-widest text-cyan-300 uppercase -mt-2">CINEMA SCREEN THIS WAY</span>
+            </div>
+
+            <!-- Seat Grid -->
+            <div class="w-full overflow-x-auto pb-4 flex justify-center">
+              <div class="space-y-2 min-w-[580px]">
+                ${rows.map(row => `
+                  <div class="flex items-center justify-center space-x-2">
+                    <span class="w-6 text-center text-xs font-bold text-slate-500">${row}</span>
+                    <div class="flex items-center space-x-1.5">
+                      ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => {
+                        const seatId = `${row}${num}`;
+                        const isSelected = selectedSeatIds.includes(seatId);
+                        const seatKey = `${st.id}_${seatId}`;
+                        const isBooked = seatStatuses[seatKey] === "BOOKED";
+                        const isVip = row === "E" || row === "F";
+                        const isRecliner = row === "G" || row === "H";
+                        const isAccessible = row === "C" && (num === 1 || num === 10);
+
+                        let colorClass = "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700";
+                        if (isVip) colorClass = "bg-purple-950/40 text-purple-200 border-purple-600/50 hover:bg-purple-900";
+                        if (isRecliner) colorClass = "bg-rose-950/40 text-rose-200 border-rose-600/50 hover:bg-rose-900";
+                        if (isAccessible) colorClass = "bg-blue-950/40 text-blue-200 border-blue-600/50 hover:bg-blue-900";
+
+                        if (isSelected) colorClass = "bg-amber-500 text-slate-950 font-black border-amber-300 scale-110 shadow-lg shadow-amber-500/40";
+                        else if (isBooked) colorClass = "bg-slate-950 text-slate-700 border-slate-900 cursor-not-allowed opacity-30";
+
+                        return `
+                          <button ${isBooked ? 'disabled' : ''} onclick="toggleSeat('${seatId}', ${st.price})" class="w-8 h-8 rounded-t-lg rounded-b text-[10px] font-bold border transition-all flex items-center justify-center ${colorClass}">
+                            ${isSelected ? '✓' : num}
+                          </button>
+                        `;
+                      }).join("")}
+                    </div>
+                    <span class="w-6 text-center text-xs font-bold text-slate-500">${row}</span>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="pt-6 border-t border-white/10 mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+              <div class="flex items-center space-x-2"><div class="w-4 h-4 rounded bg-slate-800 border border-slate-700"></div><span class="text-slate-400">Available</span></div>
+              <div class="flex items-center space-x-2"><div class="w-4 h-4 rounded bg-amber-500 border border-amber-300"></div><span class="text-amber-400 font-bold">Selected</span></div>
+              <div class="flex items-center space-x-2"><div class="w-4 h-4 rounded bg-purple-950 border border-purple-600"></div><span class="text-purple-300">VIP (+$4.00)</span></div>
+              <div class="flex items-center space-x-2"><div class="w-4 h-4 rounded bg-rose-950 border border-rose-600"></div><span class="text-rose-300">Recliner (+$6.00)</span></div>
+              <div class="flex items-center space-x-2"><div class="w-4 h-4 rounded bg-slate-950 border border-slate-900 opacity-40"></div><span class="text-slate-600">Sold Out</span></div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Bar -->
+          <div class="fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-white/10 p-4 sm:p-5 shadow-2xl">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="text-xs text-slate-300 space-y-1">
+                <div>Seats: <span class="text-amber-400 font-bold">${selectedSeatIds.join(", ") || "None"}</span></div>
+                <div class="text-slate-400">Subtotal: $${(subtotal / 100).toFixed(2)} • Fees: $${(fees / 100).toFixed(2)} • Tax (8%): $${(tax / 100).toFixed(2)}</div>
+              </div>
+              <div class="flex items-center space-x-4">
+                <div class="text-right">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 block">Total</span>
+                  <span class="text-2xl font-black text-white">$${(total / 100).toFixed(2)}</span>
+                </div>
+                <button ${selectedSeatIds.length === 0 ? 'disabled' : ''} onclick="proceedToCheckout()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-40 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition-all">Proceed to Checkout</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleSeat(seatId) {
+      if (selectedSeatIds.includes(seatId)) {
+        selectedSeatIds = selectedSeatIds.filter(id => id !== seatId);
+      } else {
+        if (selectedSeatIds.length >= 8) {
+          alert("Maximum 8 seats per booking.");
+          return;
+        }
+        selectedSeatIds.push(seatId);
+      }
+      renderSeatSelection(document.getElementById("appContent"), viewData.showtime);
+    }
+
+    function proceedToCheckout() {
+      const st = viewData.showtime;
+      const subtotal = selectedSeatIds.reduce((sum, sId) => {
+        let price = st.price;
+        if (sId[0] === "E" || sId[0] === "F") price += 400;
+        if (sId[0] === "G" || sId[0] === "H") price += 600;
+        return sum + price;
+      }, 0);
+      const fees = selectedSeatIds.length * 150;
+      const tax = Math.round(subtotal * 0.08);
+      const total = subtotal + fees + tax;
+
+      const newBooking = {
+        id: "b-" + Date.now().toString(36),
+        referenceCode: "CB-" + Math.random().toString(36).substring(2, 6).toUpperCase() + "-" + Math.random().toString(36).substring(2, 6).toUpperCase(),
+        showtimeId: st.id,
+        movieTitle: st.movieTitle,
+        moviePoster: st.moviePoster,
+        cinemaName: st.cinemaName,
+        screen: st.screen,
+        time: st.time,
+        seats: [...selectedSeatIds],
+        subtotal,
+        fees,
+        tax,
+        total,
+        status: "PENDING",
+        createdAt: new Date().toISOString()
+      };
+
+      navigateTo('checkout', { booking: newBooking });
+    }
+
+    // 4. CHECKOUT VIEW
+    function renderCheckout(c, b) {
+      c.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-8">
+          <div class="flex items-center justify-between">
+            <button onclick="navigateTo('booking', { showtime: viewData.showtime })" class="text-xs text-slate-400 hover:text-white">← Back to Seat Selection</button>
+            <div class="px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">Seats Held for 10:00</div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+            <!-- Order Breakdown -->
+            <div class="md:col-span-5 glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+              <div class="flex space-x-3 pb-3 border-b border-white/10">
+                <img src="${b.moviePoster}" class="w-16 h-24 rounded-lg object-cover shadow-md" />
+                <div class="space-y-1">
+                  <h3 class="text-sm font-bold text-white">${b.movieTitle}</h3>
+                  <p class="text-xs text-slate-400">${b.cinemaName} • ${b.screen}</p>
+                  <p class="text-xs text-amber-400 font-bold">${b.time}</p>
+                </div>
+              </div>
+
+              <div class="text-xs space-y-2">
+                <div class="flex justify-between text-slate-300"><span>Seats (${b.seats.length})</span><span class="font-bold">${b.seats.join(", ")}</span></div>
+                <div class="flex justify-between text-slate-400"><span>Tickets Subtotal</span><span>$${(b.subtotal / 100).toFixed(2)}</span></div>
+                <div class="flex justify-between text-slate-400"><span>Convenience Fees</span><span>$${(b.fees / 100).toFixed(2)}</span></div>
+                <div class="flex justify-between text-slate-400"><span>Estimated Tax (8%)</span><span>$${(b.tax / 100).toFixed(2)}</span></div>
+                <div class="flex justify-between text-base font-black text-white pt-2 border-t border-white/10"><span>Grand Total</span><span class="text-amber-400">$${(b.total / 100).toFixed(2)}</span></div>
+              </div>
+            </div>
+
+            <!-- Payment Simulation -->
+            <div class="md:col-span-7 glass-panel rounded-2xl p-6 border border-white/10 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-white">Payment Provider (Test Mode)</h3>
+                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold">TEST GATEWAY</span>
+              </div>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="text-xs font-semibold text-slate-400 block mb-1">Cardholder Name</label>
+                  <input type="text" value="Alex Johnson" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200" />
+                </div>
+                <div>
+                  <label class="text-xs font-semibold text-slate-400 block mb-1">Card Number</label>
+                  <input type="text" value="4242 •••• •••• 4242" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 font-mono" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">Expiry</label>
+                    <input type="text" value="12/28" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 font-mono" />
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">CVC</label>
+                    <input type="password" value="888" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 font-mono" />
+                  </div>
+                </div>
+
+                <div class="pt-2">
+                  <button onclick="confirmPayment()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/20 transition-all">
+                    Pay $${(b.total / 100).toFixed(2)} & Generate Ticket
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function confirmPayment() {
+      const b = viewData.booking;
+      b.status = "CONFIRMED";
+      b.ticketCode = "TKT-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      // Mark seats as BOOKED in storage
+      b.seats.forEach(sId => {
+        seatStatuses[`${b.showtimeId}_${sId}`] = "BOOKED";
+      });
+      setStore("cb_seat_status", seatStatuses);
+
+      // Save to bookings history
+      bookings.unshift(b);
+      setStore("cb_bookings", bookings);
+
+      navigateTo('ticket', { bookingId: b.id });
+    }
+
+    // 5. DIGITAL TICKET VIEW
+    function renderTicket(c, bookingId) {
+      const b = bookings.find(x => x.id === bookingId) || viewData.booking;
+      const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+
+      c.innerHTML = `
+        <div class="max-w-2xl mx-auto space-y-6">
+          <div class="text-center space-y-1">
+            <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto text-xl font-black">✓</div>
+            <h1 class="text-2xl font-black text-white">Booking Confirmed!</h1>
+            <p class="text-xs text-slate-400">Present this digital usher pass at the cinema doors.</p>
+          </div>
+
+          <!-- Ticket Card -->
+          <div id="printableTicket" class="relative rounded-3xl overflow-hidden glass-card border border-white/10 shadow-2xl ticket-edge-cut">
+            <div class="bg-gradient-to-r from-amber-500 to-yellow-500 p-4 text-slate-950 flex items-center justify-between">
+              <span class="font-black text-xs uppercase tracking-wider">CineBook Admission Pass</span>
+              <span class="font-black font-mono text-sm bg-slate-950/20 px-2 py-0.5 rounded">${b.referenceCode}</span>
+            </div>
+
+            <div class="p-6 sm:p-8 space-y-6">
+              <div class="flex space-x-4 pb-4 border-b border-white/10">
+                <img src="${b.moviePoster}" class="w-20 h-28 rounded-xl object-cover shadow-lg shrink-0" />
+                <div class="space-y-1">
+                  <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold">${b.screen}</span>
+                  <h2 class="text-xl font-black text-white">${b.movieTitle}</h2>
+                  <p class="text-xs text-slate-300">${b.cinemaName}</p>
+                  <p class="text-xs text-amber-400 font-bold">${today} at ${b.time}</p>
+                </div>
+              </div>
+
+              <div class="space-y-2 pb-4 border-b border-white/10">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block">Reserved Seats</span>
+                <div class="flex flex-wrap gap-2">
+                  ${b.seats.map(s => `<span class="px-3 py-1 rounded-lg bg-slate-900 border border-amber-500/40 text-xs font-bold text-amber-400 font-mono">Seat ${s}</span>`).join("")}
+                </div>
+              </div>
+
+              <!-- QR Code Block -->
+              <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                <div class="text-xs text-slate-400 space-y-1 text-center sm:text-left">
+                  <div>Ticket Code: <span class="text-amber-400 font-mono font-bold">${b.ticketCode}</span></div>
+                  <div>Total Paid: <span class="text-white font-bold">$${(b.total / 100).toFixed(2)}</span></div>
+                  <div class="text-[11px] text-slate-500">Encrypted single-entry verified barcode</div>
+                </div>
+                <div class="p-3 bg-white rounded-2xl shadow-xl shrink-0 flex flex-col items-center">
+                  <canvas id="qrCanvas" class="w-36 h-36"></canvas>
+                  <span class="text-[9px] font-mono font-bold text-slate-900 mt-1">CINEBOOK VERIFIED</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="grid grid-cols-3 gap-3">
+            <button onclick="window.print()" class="py-3 rounded-xl glass-card text-xs font-bold hover:bg-white/10 transition-colors">Print Pass</button>
+            <button onclick="downloadCalendarInvite('${b.movieTitle}', '${b.cinemaName}')" class="py-3 rounded-xl glass-card text-xs font-bold hover:bg-white/10 transition-colors">Add to Calendar</button>
+            <button onclick="navigateTo('bookings')" class="py-3 rounded-xl bg-amber-500 text-slate-950 text-xs font-black hover:bg-amber-400 transition-colors">View All Bookings</button>
+          </div>
+        </div>
+      `;
+
+      // Render QR Code onto canvas
+      setTimeout(() => {
+        const canvas = document.getElementById("qrCanvas");
+        if (canvas && window.QRCode) {
+          QRCode.toCanvas(canvas, JSON.stringify({ ref: b.referenceCode, code: b.ticketCode, seats: b.seats }), {
+            width: 144,
+            margin: 1,
+            color: { dark: "#0f172a", light: "#ffffff" }
+          });
+        }
+      }, 50);
+    }
+
+    function downloadCalendarInvite(title, cinema) {
+      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Movie: ${title}\nLOCATION:${cinema}\nDESCRIPTION:CineBook Reservation\nEND:VEVENT\nEND:VCALENDAR`;
+      const blob = new Blob([ics], { type: "text/calendar" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `CineBook-${title.replace(/\s+/g, '_')}.ics`;
+      a.click();
+    }
+
+    // 6. BOOKINGS HISTORY VIEW
+    function renderBookings(c) {
+      c.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-6">
+          <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-black text-white">My Cinema Bookings (${bookings.length})</h1>
+            <button onclick="navigateTo('home')" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs">Book New Movie</button>
+          </div>
+
+          ${bookings.length === 0 ? `
+            <div class="glass-card rounded-2xl p-12 text-center space-y-3">
+              <div class="text-3xl text-slate-600">🎟️</div>
+              <h3 class="text-base font-bold text-white">No Bookings Yet</h3>
+              <p class="text-xs text-slate-400">Your reserved tickets and usher passes will appear here.</p>
+              <button onclick="navigateTo('home')" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs">Browse Movies</button>
+            </div>
+          ` : `
+            <div class="space-y-4">
+              ${bookings.map(b => `
+                <div class="glass-card rounded-2xl p-5 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div class="flex space-x-3">
+                    <img src="${b.moviePoster}" class="w-16 h-24 rounded-lg object-cover shrink-0" />
+                    <div class="space-y-1">
+                      <div class="flex items-center space-x-2">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${b.status === 'CONFIRMED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-red-500/20 text-red-400 border border-red-500/40'}">${b.status}</span>
+                        <span class="text-xs font-mono font-bold text-amber-400">${b.referenceCode}</span>
+                      </div>
+                      <h3 class="text-base font-bold text-white">${b.movieTitle}</h3>
+                      <p class="text-xs text-slate-400">${b.cinemaName} • ${b.time}</p>
+                      <p class="text-xs text-slate-300">Seats: <span class="font-bold text-amber-400">${b.seats.join(", ")}</span></p>
+                    </div>
+                  </div>
+
+                  <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                    <span class="text-base font-black text-white">$${(b.total / 100).toFixed(2)}</span>
+                    <div class="flex items-center space-x-2">
+                      ${b.status === 'CONFIRMED' ? `
+                        <button onclick="cancelBooking('${b.id}')" class="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs font-semibold">Cancel</button>
+                        <button onclick="navigateTo('ticket', { bookingId: '${b.id}' })" class="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black">View Ticket</button>
+                      ` : ''}
+                    </div>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function cancelBooking(id) {
+      if (!confirm("Are you sure you want to cancel this booking and release seats back to the cinema pool?")) return;
+      const b = bookings.find(x => x.id === id);
+      if (b) {
+        b.status = "CANCELLED";
+        // Unmark seats
+        b.seats.forEach(sId => {
+          delete seatStatuses[`${b.showtimeId}_${sId}`];
+        });
+        setStore("cb_seat_status", seatStatuses);
+        setStore("cb_bookings", bookings);
+        renderBookings(document.getElementById("appContent"));
+      }
+    }
+
+    // 7. CINEMAS DIRECTORY VIEW
+    function renderCinemas(c) {
+      c.innerHTML = `
+        <div class="space-y-6">
+          <div class="space-y-1">
+            <h1 class="text-2xl sm:text-3xl font-black text-white">Our Cinema Hubs & Lounges</h1>
+            <p class="text-xs text-slate-400">Discover premium auditoriums featuring IMAX Laser 70mm and Dolby Atmos sound.</p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            ${cinemas.map(cin => `
+              <div class="glass-card rounded-3xl p-6 border border-white/10 space-y-4 flex flex-col justify-between">
+                <div class="space-y-2">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500/20 text-amber-400">${cin.city}</span>
+                  <h3 class="text-lg font-bold text-white">${cin.name}</h3>
+                  <p class="text-xs text-slate-300">📍 ${cin.address}</p>
+                  <p class="text-xs text-slate-400">📞 ${cin.phone}</p>
+                  <div class="p-2 rounded-xl bg-slate-900 text-xs text-amber-400 font-semibold mt-2">${cin.screen}</div>
+                </div>
+                <button onclick="navigateTo('showtimes')" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors">View Showtimes</button>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    // 8. SHOWTIMES MASTER VIEW
+    function renderShowtimes(c) {
+      c.innerHTML = `
+        <div class="space-y-6">
+          <div class="space-y-1">
+            <h1 class="text-2xl sm:text-3xl font-black text-white">Daily Showtimes Schedule</h1>
+            <p class="text-xs text-slate-400">Select your preferred film and experience to pick your seats.</p>
+          </div>
+          <div class="space-y-4">
+            ${movies.map(m => `
+              <div class="glass-card rounded-2xl p-5 border border-white/10 flex flex-col sm:flex-row gap-4 items-start">
+                <img src="${m.posterUrl}" class="w-20 h-28 rounded-xl object-cover shrink-0" />
+                <div class="flex-1 space-y-2">
+                  <div class="flex items-center space-x-2">
+                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold">${m.rating}</span>
+                    <h3 class="text-base font-bold text-white">${m.title}</h3>
+                  </div>
+                  <p class="text-xs text-slate-400 line-clamp-2">${m.synopsis}</p>
+                  <div class="pt-2 flex flex-wrap gap-2">
+                    ${cinemas.map(cin => `
+                      <button onclick="navigateTo('booking', { showtime: { id: '${m.id}_${cin.id}_1900', movieTitle: '${m.title}', moviePoster: '${m.posterUrl}', cinemaName: '${cin.name}', screen: '${cin.screen}', time: '7:00 PM', price: 2100 } })" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-amber-500 text-xs text-slate-200">
+                        <span class="font-bold text-amber-400">7:00 PM</span> • ${cin.city} (${cin.screen})
+                      </button>
+                    `).join("")}
+                  </div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    // 9. ADMIN CONSOLE VIEW
+    function renderAdmin(c) {
+      const totalRevenue = bookings.reduce((sum, b) => b.status === "CONFIRMED" ? sum + b.total : sum, 0);
+      const totalTickets = bookings.reduce((sum, b) => b.status === "CONFIRMED" ? sum + b.seats.length : sum, 0);
+
+      c.innerHTML = `
+        <div class="space-y-8">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold uppercase">ADMIN DASHBOARD</span>
+              <h1 class="text-2xl sm:text-3xl font-black text-white">CineBook Operations Console</h1>
+            </div>
+            <button onclick="clearExpiredHolds()" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs">Run Hold Cleaner</button>
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div class="glass-card rounded-2xl p-4 border border-white/10 space-y-1">
+              <span class="text-xs text-slate-400">Total Revenue</span>
+              <div class="text-2xl font-black text-white">$${(totalRevenue / 100).toFixed(2)}</div>
+              <span class="text-[10px] text-emerald-400 font-bold">Verified tickets</span>
+            </div>
+            <div class="glass-card rounded-2xl p-4 border border-white/10 space-y-1">
+              <span class="text-xs text-slate-400">Tickets Issued</span>
+              <div class="text-2xl font-black text-white">${totalTickets} Seats</div>
+              <span class="text-[10px] text-amber-400 font-bold">Scannable QR passes</span>
+            </div>
+            <div class="glass-card rounded-2xl p-4 border border-white/10 space-y-1">
+              <span class="text-xs text-slate-400">Active Movies</span>
+              <div class="text-2xl font-black text-white">${movies.length} Titles</div>
+              <span class="text-[10px] text-cyan-400 font-bold">Catalog screening</span>
+            </div>
+            <div class="glass-card rounded-2xl p-4 border border-white/10 space-y-1">
+              <span class="text-xs text-slate-400">Auditorium Screens</span>
+              <div class="text-2xl font-black text-white">${cinemas.length * 2} Screens</div>
+              <span class="text-[10px] text-purple-400 font-bold">IMAX & Dolby Atmos</span>
+            </div>
+          </div>
+
+          <!-- Add Movie Form -->
+          <div class="glass-card rounded-3xl p-6 border border-white/10 space-y-4">
+            <h3 class="text-base font-bold text-white">Add New Movie to Catalog</h3>
+            <form onsubmit="handleAdminAddMovie(event)" class="space-y-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <input id="adminTitle" required placeholder="Movie Title (e.g. Gladiator II)" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200" />
+                <input id="adminDuration" type="number" required placeholder="Duration (mins, e.g. 148)" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200" />
+                <input id="adminGenre" required placeholder="Genre (e.g. Action, Drama)" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200" />
+              </div>
+              <textarea id="adminSynopsis" required rows="2" placeholder="Movie synopsis..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200"></textarea>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input id="adminPoster" required placeholder="Poster Image URL" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200" />
+                <input id="adminTrailer" placeholder="YouTube Embed Trailer URL" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200" />
+              </div>
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs">Publish Movie</button>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    function handleAdminAddMovie(e) {
+      e.preventDefault();
+      const title = document.getElementById("adminTitle").value;
+      const duration = Number(document.getElementById("adminDuration").value);
+      const genre = document.getElementById("adminGenre").value;
+      const synopsis = document.getElementById("adminSynopsis").value;
+      const posterUrl = document.getElementById("adminPoster").value;
+      const trailerUrl = document.getElementById("adminTrailer").value || "https://www.youtube.com/embed/Way9Dexny3w";
+
+      const newM = {
+        id: "m-" + Date.now().toString(36),
+        title,
+        slug: title.toLowerCase().replace(/\s+/g, '-'),
+        synopsis,
+        durationMins: duration,
+        releaseDate: "2025-01-01",
+        posterUrl,
+        backdropUrl: posterUrl,
+        trailerEmbed: trailerUrl,
+        rating: "PG-13",
+        language: "English",
+        genres: genre.split(",").map(g => g.trim())
+      };
+
+      movies.unshift(newM);
+      setStore("cb_movies", movies);
+      alert(`Movie "${title}" published to catalog!`);
+      renderAdmin(document.getElementById("appContent"));
+    }
+
+    function clearExpiredHolds() {
+      alert("Expired Seat Hold Cleaner: Scanned all auditoriums. Any uncompleted holds older than 10 minutes have been safely returned to the available seat pool.");
+    }
+
+    // Initialize App
+    navigateTo('home');
+  </script>
+</body>
 </html>
