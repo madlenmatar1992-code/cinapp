@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CineBook | Cinema, curated</title>
+    <meta name="description" content="Explore the CineBook cinema catalogue." />
+    <style>
+      :root {
+        --ink: #f8f4ec;
+        --muted: #a8abb4;
+        --gold: #e9b949;
+        --red: #e15b4d;
+        --panel: rgba(22, 25, 35, 0.8);
+        --line: rgba(255, 255, 255, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #080a0f;
+        font-family: Georgia, "Times New Roman", serif;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: radial-gradient(circle at 75% 5%, rgba(225, 91, 77, 0.18), transparent 34%),
+          radial-gradient(circle at 12% 45%, rgba(233, 185, 73, 0.1), transparent 32%),
+          linear-gradient(135deg, #080a0f 0%, #111520 52%, #090b11 100%);
+      }
+
+      header, main { width: min(1160px, calc(100% - 40px)); margin: 0 auto; }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 28px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand { display: flex; gap: 12px; align-items: center; font-size: 1.35rem; letter-spacing: 0.03em; }
+      .brand-mark { color: var(--gold); font-size: 1.7rem; }
+      .status { color: var(--muted); font: 0.78rem Arial, sans-serif; }
+      .hero { padding: 86px 0 64px; max-width: 720px; }
+      .eyebrow { color: var(--gold); font: 700 0.75rem Arial, sans-serif; letter-spacing: 0.18em; text-transform: uppercase; }
+      h1 { margin: 18px 0; font-size: clamp(3rem, 8vw, 6.5rem); line-height: 0.9; font-weight: 500; }
+      .hero p { color: #d5d1c9; font-size: 1.15rem; line-height: 1.65; max-width: 590px; }
+      .notice { margin-top: 30px; padding: 14px 16px; border-left: 2px solid var(--gold); color: var(--muted); font: 0.85rem/1.5 Arial, sans-serif; background: rgba(255,255,255,0.04); }
+      .catalog-head { display: flex; gap: 18px; align-items: end; justify-content: space-between; margin: 20px 0; }
+      h2 { margin: 0; font-size: 2rem; font-weight: 500; }
+      input { width: min(300px, 100%); padding: 13px 15px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; font: 0.95rem Arial, sans-serif; }
+      .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 20px 0 28px; }
+      .filter { padding: 8px 13px; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 20px; cursor: pointer; }
+      .filter.active, .filter:hover { color: #17140e; background: var(--gold); border-color: var(--gold); }
+      .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; padding-bottom: 80px; }
+      .movie { overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; }
+      .movie img { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; }
+      .movie-body { padding: 16px; }
+      .movie h3 { margin: 0 0 8px; font-size: 1.25rem; font-weight: 500; }
+      .meta { color: var(--muted); font: 0.78rem Arial, sans-serif; }
+      .tag { display: inline-block; margin-top: 14px; padding: 5px 8px; color: var(--gold); background: rgba(233,185,73,0.1); font: 700 0.68rem Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.08em; }
+      footer { padding: 26px 0 40px; color: var(--muted); border-top: 1px solid var(--line); font: 0.8rem Arial, sans-serif; }
+      @media (max-width: 850px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 560px) { header, main { width: min(100% - 28px, 1160px); } .status { display: none; } .hero { padding: 64px 0 46px; } .catalog-head { display: block; } input { margin-top: 18px; width: 100%; } .grid { gap: 12px; } .movie-body { padding: 11px; } .movie h3 { font-size: 1rem; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand"><span class="brand-mark">●</span><span>CineBook</span></div>
+      <div class="status">GITHUB PAGES EDITION / CATALOGUE PREVIEW</div>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="eyebrow">The next screening starts here</div>
+        <h1>Stories worth leaving home for.</h1>
+        <p>Browse a hand-picked programme of modern classics, midnight discoveries, and films made for the big screen.</p>
+        <div class="notice">This GitHub Pages edition is a static catalogue preview. Live accounts, seat reservations, payments, and ticket history run in the server-backed deployment.</div>
+      </section>
+
+      <section aria-labelledby="catalogue-title">
+        <div class="catalog-head"><h2 id="catalogue-title">Now showing</h2><input id="search" type="search" placeholder="Search the programme" aria-label="Search movies" /></div>
+        <div class="filters" id="filters" aria-label="Filter by genre"></div>
+        <div class="grid" id="movies"></div>
+      </section>
+      <footer>CineBook cinema catalogue · Built for the big screen</footer>
+    </main>
+    <script>
+      const movies = [
+        { title: "Dune: Part Two", genre: "Sci-Fi", detail: "Epic / 166 min", image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=85" },
+        { title: "Inception", genre: "Thriller", detail: "Mind-bending / 148 min", image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=700&q=85" },
+        { title: "Interstellar", genre: "Adventure", detail: "Cosmic / 169 min", image: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=700&q=85" },
+        { title: "Oppenheimer", genre: "Drama", detail: "Historical / 180 min", image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=700&q=85" },
+        { title: "Blade Runner 2049", genre: "Sci-Fi", detail: "Neo-noir / 164 min", image: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=700&q=85" },
+        { title: "The Grand Budapest Hotel", genre: "Comedy", detail: "Delightful / 100 min", image: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=700&q=85" },
+        { title: "Spirited Away", genre: "Animation", detail: "Magical / 125 min", image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=700&q=85" },
+        { title: "The Godfather", genre: "Drama", detail: "Essential / 175 min", image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=700&q=85" }
+      ];
+      const movieGrid = document.querySelector("#movies");
+      const search = document.querySelector("#search");
+      const filters = document.querySelector("#filters");
+      let genre = "All";
+      ["All", ...new Set(movies.map((movie) => movie.genre))].forEach((name) => {
+        const button = document.createElement("button");
+        button.className = `filter${name === "All" ? " active" : ""}`;
+        button.textContent = name;
+        button.onclick = () => { genre = name; document.querySelectorAll(".filter").forEach((item) => item.classList.toggle("active", item === button)); render(); };
+        filters.append(button);
+      });
+      function render() {
+        const query = search.value.toLowerCase();
+        movieGrid.innerHTML = movies.filter((movie) => (genre === "All" || movie.genre === genre) && movie.title.toLowerCase().includes(query)).map((movie) => `<article class="movie"><img src="${movie.image}" alt="${movie.title} poster" loading="lazy"><div class="movie-body"><h3>${movie.title}</h3><div class="meta">${movie.detail}</div><span class="tag">${movie.genre}</span></div></article>`).join("");
+      }
+      search.addEventListener("input", render);
+      render();
+    </script>
+  </body>
+</html>
